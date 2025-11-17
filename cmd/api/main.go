@@ -8,9 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hanzala211/cms/internal/db"
-	"github.com/hanzala211/cms/internal/env"
-	"github.com/hanzala211/cms/internal/store"
+	"github.com/hanzala211/go-backend-template/internal/auth"
+	"github.com/hanzala211/go-backend-template/internal/db"
+	"github.com/hanzala211/go-backend-template/internal/env"
+	"github.com/hanzala211/go-backend-template/internal/store"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
@@ -29,6 +30,10 @@ func main() {
 			password: env.GetEnv("DB_PASSWORD", "postgres"),
 			dbname:   env.GetEnv("DB_NAME", "postgres"),
 		},
+		jwtConfig: jwtConfig{
+			secret:     env.GetEnv("JWT_SECRET", "secret"),
+			expiryTime: time.Now().Add(24 * time.Hour),
+		},
 	}
 
 	loggerProd, _ := zap.NewDevelopment()
@@ -42,13 +47,15 @@ func main() {
 		cfg.dbConfig.dbname,
 	))
 	logger := loggerProd.Sugar()
+	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.jwtConfig.secret, cfg.jwtConfig.expiryTime)
 	userStore := store.NewUserStruct(db)
 	storage := store.NewStorage(userStore)
 	app := application{
-		config: cfg,
-		logger: logger,
-		db:     db,
-		store:  storage,	
+		config:           cfg,
+		logger:           logger,
+		db:               db,
+		store:            storage,
+		jwtAuthenticator: jwtAuthenticator,
 	}
 	srv := app.serve()
 	serverErr := make(chan error, 1) // one buffer because multiple errors can cause the channel to miss the real err
