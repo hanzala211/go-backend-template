@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 )
 
 type CheckHealthPayload struct {
@@ -54,4 +55,9 @@ func (app *application) checkTokenHealth(w http.ResponseWriter, r *http.Request)
 	app.writeJSON(w, http.StatusOK, map[string]any{
 		"user_id": userId,
 	})
+}
+
+func (app *application) checkRateLimiterHealth(w http.ResponseWriter, r *http.Request) {
+	time.Sleep(time.Second * 10)
+	app.writeJSON(w, http.StatusOK, "rate limiter test")
 }

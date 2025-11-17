@@ -11,6 +11,7 @@ import (
 	"github.com/hanzala211/go-backend-template/internal/auth"
 	"github.com/hanzala211/go-backend-template/internal/db"
 	"github.com/hanzala211/go-backend-template/internal/env"
+	"github.com/hanzala211/go-backend-template/internal/ratelimiter"
 	"github.com/hanzala211/go-backend-template/internal/store"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -34,7 +35,13 @@ func main() {
 			secret:     env.GetEnv("JWT_SECRET", "secret"),
 			expiryTime: time.Now().Add(24 * time.Hour),
 		},
+		rateLimiterConfig: ratelimiter.RateLimiterConfig{
+			MaxRequests: env.GetEnvInt("RATE_LIMITER_MAX_REQUESTS", 2),
+			Duration:    time.Duration(env.GetEnvInt("RATE_LIMITER_DURATION", 5)) * time.Second,
+			Enabled:     env.GetEnvBool("RATE_LIMITER_ENABLED", true),
+		},
 	}
+	fmt.Println(cfg.rateLimiterConfig)
 
 	loggerProd, _ := zap.NewDevelopment()
 	defer loggerProd.Sync()
@@ -56,6 +63,7 @@ func main() {
 		db:               db,
 		store:            storage,
 		jwtAuthenticator: jwtAuthenticator,
+		rateLimiter:      ratelimiter.NewFixedWindowLimiter(cfg.rateLimiterConfig.MaxRequests, cfg.rateLimiterConfig.Duration),
 	}
 	srv := app.serve()
 	serverErr := make(chan error, 1) // one buffer because multiple errors can cause the channel to miss the real err

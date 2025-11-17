@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/hanzala211/go-backend-template/internal/auth"
+	"github.com/hanzala211/go-backend-template/internal/ratelimiter"
 	"github.com/hanzala211/go-backend-template/internal/store"
 	"go.uber.org/zap"
 )
@@ -17,12 +18,14 @@ type application struct {
 	db               *sql.DB
 	store            *store.Storage
 	jwtAuthenticator *auth.JWTAuthenticator
+	rateLimiter      *ratelimiter.FixedWindowLimiter
 }
 
 type config struct {
-	addr      string
-	dbConfig  dbConfig
-	jwtConfig jwtConfig
+	addr              string
+	dbConfig          dbConfig
+	jwtConfig         jwtConfig
+	rateLimiterConfig ratelimiter.RateLimiterConfig
 }
 
 type jwtConfig struct {
@@ -40,6 +43,9 @@ type dbConfig struct {
 
 func (app *application) serve() *http.Server {
 	r := chi.NewRouter()
+	if app.config.rateLimiterConfig.Enabled {
+		r.Use(app.RateLimiterMiddleware)
+	}
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", app.checkHealth)
 		r.Post("/health", app.writeCheckHealth)
@@ -48,6 +54,7 @@ func (app *application) serve() *http.Server {
 			r.Use(app.AuthMiddleware)
 			r.Get("/health/token", app.checkTokenHealth)
 		})
+		r.Get("/health/limiter", app.checkRateLimiterHealth)
 	})
 	return &http.Server{
 		Addr:    app.config.addr,
