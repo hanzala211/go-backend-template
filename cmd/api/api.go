@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/hanzala211/go-backend-template/internal/auth"
 	"github.com/hanzala211/go-backend-template/internal/ratelimiter"
 	"github.com/hanzala211/go-backend-template/internal/store"
@@ -43,6 +44,10 @@ type dbConfig struct {
 
 func (app *application) serve() *http.Server {
 	r := chi.NewRouter()
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"https://*", "http://*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+	}))
 	if app.config.rateLimiterConfig.Enabled {
 		r.Use(app.RateLimiterMiddleware)
 	}
