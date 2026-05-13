@@ -15,6 +15,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   go-backend-template:
+    image: go-backend-template:latest
     build:
       context: .
       dockerfile: Dockerfile.dev
