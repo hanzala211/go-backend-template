@@ -12,6 +12,7 @@ import (
 	"github.com/hanzala211/go-backend-template/internal/db"
 	"github.com/hanzala211/go-backend-template/internal/env"
 	"github.com/hanzala211/go-backend-template/internal/ratelimiter"
+	"github.com/hanzala211/go-backend-template/internal/service"
 	"github.com/hanzala211/go-backend-template/internal/store"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
@@ -57,7 +58,10 @@ func main() {
 	jwtAuthenticator := auth.NewJWTAuthenticator(cfg.jwtConfig.secret, cfg.jwtConfig.expiryTime)
 	userStore := store.NewUserStruct(db)
 	storage := store.NewStorage(userStore)
+	userService := service.NewUserService(storage)
+	service := service.NewService(userService)
 	app := application{
+		service:          service,
 		config:           cfg,
 		logger:           logger,
 		db:               db,

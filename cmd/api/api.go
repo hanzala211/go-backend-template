@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/hanzala211/go-backend-template/internal/auth"
 	"github.com/hanzala211/go-backend-template/internal/ratelimiter"
+	"github.com/hanzala211/go-backend-template/internal/service"
 	"github.com/hanzala211/go-backend-template/internal/store"
 	"go.uber.org/zap"
 )
@@ -20,6 +21,7 @@ type application struct {
 	store            *store.Storage
 	jwtAuthenticator *auth.JWTAuthenticator
 	rateLimiter      *ratelimiter.FixedWindowLimiter
+	service          *service.Service
 }
 
 type config struct {
