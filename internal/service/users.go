@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hanzala211/go-backend-template/internal/store"
 	"golang.org/x/sync/singleflight"
@@ -25,7 +26,10 @@ func (u *UserService) GetUserProfile(ctx context.Context, userId string) (any, e
 	v, err, _ := u.requestGroup.Do(cacheKey, func() (any, error) {
 		user, err := u.store.User.FetchByID(ctx, userId)
 		if err != nil {
-			return nil, err
+			return nil, &AppError{
+				Message: fmt.Sprintf("failed to fetch profile for user %s", userId),
+				Err:     fmt.Errorf("store error: %w", err),
+			}
 		}
 		// cache add logic will go here
 		return user, nil

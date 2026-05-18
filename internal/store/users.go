@@ -29,7 +29,7 @@ func (u *UserStruct) FetchByID(ctx context.Context, id string) (any, error) {
 	err := u.db.QueryRowContext(ctx, query, id).Scan(&user.ID, &user.Name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, errors.New("User not found!")
+			return nil, ErrNotFound
 		}
 		return nil, err
 	}
